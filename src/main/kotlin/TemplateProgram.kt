@@ -2,7 +2,7 @@ import org.openrndr.application
 import org.openrndr.draw.loadImage
 import kotlin.random.Random
 
-val network = Network(arrayOf(2, 1))
+val network = Net(arrayOf(2, 1))
 
 fun main() = application {
     configure {
@@ -13,32 +13,9 @@ fun main() = application {
     program {
         val sampleSize = 1000
         for (sample in 0 until sampleSize) {
-            val i1 = Random.nextInt(2).toDouble()
-            val i2 = Random.nextInt(2).toDouble()
-            val o = if (i1==1.0 || i2==1.0) 1.0 else 0.0
-            network.simpleLearning(arrayOf(i1, i2), arrayOf(o))
-        }
-
-        val tests = 10
-        for (test in 0 until tests) {
-            val i1 = Random.nextInt(2).toDouble()
-            val i2 = Random.nextInt(2).toDouble()
-            val o = if (i1==1.0 || i2==1.0) 1.0 else 0.0
-            val res = network.feedForward(arrayOf(i1, i2))
-            println("$i1 || $i2 = ${res[0]}")
-        }
-
-        /*
-        val sampleSize = 1000
-        for (sample in 0 until sampleSize) {
-            network.displayWeights()
-            network.displayBiases()
-            println("")
-            println("=============================")
-            println("Sample $sample")
             val i1 = Random.nextDouble(.5)
             val i2 = Random.nextDouble(.5)
-            network.simpleLearning(arrayOf(i1, i2), arrayOf(i1+i2))
+            network.learn(arrayOf(i1, i2), arrayOf(i1+i2))
         }
 
         val testSize = 10
@@ -49,27 +26,20 @@ fun main() = application {
             val desiredOutput = i1+i2
             println("${i1.format(3)} + ${i2.format(3)} = ${desiredOutput.format(3)}    network: ${output[0].format(3)} error: ${(output[0]-desiredOutput).format(3)}")
         }
-         */
-
-        /*
-        readAndTrain(0, 10)
-
-        val testSamplesPerDigit = 10
-        for (digit in 0 until 10) {
-            println("-- -- -- Digit: $digit -- -- --")
-            for (sample in 0 until testSamplesPerDigit) {
-                val data = readImage(digit, sample)
-                val output = network.feedForward(data)
-
-                output.display()
-            }
-        }
-
-         */
    }
 }
 
-fun readAndTrain(batchCount: Int, batchSize: Int) {
+fun readAndTrainSimple(samples: Int) {
+    for (sample in 0 until samples) {
+        for (digit in 0 until 10) {
+            val data = readImage(digit, sample)
+            val desiredOutput = Array(10) { if (it == digit) 1.0 else 0.0 }
+            network.learn(data, desiredOutput)
+        }
+    }
+}
+
+fun readAndTrainBatched(batchCount: Int, batchSize: Int, network: Net) {
     for (batchIndex in 0 until batchCount) {
         val batch = mutableListOf<Pair<Array<Double>, Array<Double>>>()
         for (dataIndex in 0 until batchSize) {
